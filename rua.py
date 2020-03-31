@@ -41,10 +41,10 @@ if __name__ == "__main__":
     if args.train:
         import torch
         import torchvision.models.resnet as resnet
-        trainset = ds.Dataset(transform=transform_train)
+        trainset = ds.Dataset(path=args.dataset,transform=transform_train)
         trainloader = torch.utils.data.DataLoader(trainset,batch_size=BATCH_SIZE,shuffle=True,num_workers=2)
 
-        testset = ds.Dataset(transform=transform_test,train=False)
+        testset = ds.Dataset(path=args.dataset,transform=transform_test,train=False)
         testloader = torch.utils.data.DataLoader(testset,batch_size=100,shuffle=False)
 
         device = torch.device("cuda" if args.cuda else "cpu")
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         net.to(device)
 
         crit = torch.nn.CrossEntropyLoss()
-        optim = torch.optim.Adam(lr=0.001,weight_decay=5e-4)
+        optim = torch.optim.Adam(net.parameters(),lr=0.001,weight_decay=5e-4)
 
         import os
 
