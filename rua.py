@@ -1,19 +1,19 @@
 from torchvision import transforms
 
-BATCH_SIZE = 128
+BATCH_SIZE = 2
 
 import dataset as ds
 transform_train = transforms.Compose(
     [
-        transforms.Resize(400),
-        transforms.RandomCrop(400,40),
+        transforms.Resize(112),
+        transforms.RandomCrop(112,32),
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
     ]
 )
 transform_test = transforms.Compose(
     [
-        transforms.Resize(400),
+        transforms.Resize(112),
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ]
@@ -75,7 +75,6 @@ if __name__ == "__main__":
                 optim.zero_grad()
 
                 outputs = net(input_)
-                outputs = torch.tensor(outputs)
                 loss = crit(outputs,tag)
                 loss.backward()
                 optim.step()
@@ -84,7 +83,8 @@ if __name__ == "__main__":
                 _,predicted = torch.max(outputs.data,1)
                 total+=tag.size(0)
                 correct += predicted.eq(tag.data).cpu().sum()
-                if(epoch%5 == 0):
+                torch.cuda.empty_cache()
+                if(i%500 == 0):
                     with open(args.output+'/output.txt','a') as f:
                         print('[epoch:%d, iter:%d] Loss: %.03f | Acc: %.3f%% ' % (epoch + 1, (i + 1 + epoch * BATCH_SIZE), loss_val / (i + 1), 100. * correct / total))
                         f.write('%03d  %05d |Loss: %.03f | Acc: %.3f%% \n'
@@ -104,11 +104,11 @@ if __name__ == "__main__":
                     total += labels.size(0)
                     correct += (predicted == labels).sum()
                 acc = 100. * correct / total
-                print('ACC:', acc)
+                print('Test ACC with epoch',epoch+1,':', acc)
                 print('Saving model......')
-                torch.save(net.state_dict(), args.output+'/net_'+(epoch+1)+'.pth')
+                torch.save(net.state_dict(), args.output+'/net_'+(str)(epoch+1)+'.pth')
                 with open(args.output+'/acc.txt','a') as f:
-                    f.write('EPOCH=',epoch+1,'ACC=',acc)
+                    f.write('EPOCH='+str(epoch+1)+'ACC='+str(acc))
                     f.flush()
 
 
@@ -119,7 +119,7 @@ if __name__ == "__main__":
         trainloader = torch.utils.data.DataLoader(trainset,batch_size=BATCH_SIZE,shuffle=True,num_workers=2)
 
         testset = ds.Dataset(transform=transform_test,train=False)
-        testloader = torch.utils.data.DataLoader(testset,batch_size=100,shuffle=False)
+        testloader = torch.utils.data.DataLoader(testset,batch_size=2,shuffle=False)
         device = torch.device("cuda" if args.cuda else "cpu")
 
         net = resnet.resnet50(pretrained=False)
@@ -153,7 +153,8 @@ if __name__ == "__main__":
                 _,predicted = torch.max(outputs.data,1)
                 total+=tag.size(0)
                 correct += predicted.eq(tag.data).cpu().sum()
-                if(epoch%5 == 0):
+                torch.cuda.empty_cache()
+                if(i%500 == 0):
                     with open(args.output+'/output.txt','a') as f:
                         print('[epoch:%d, iter:%d] Loss: %.03f | Acc: %.3f%% ' % (epoch + 1, (i + 1 + epoch * BATCH_SIZE), loss_val / (i + 1), 100. * correct / total))
                         f.write('%03d  %05d |Loss: %.03f | Acc: %.3f%% \n'
@@ -173,12 +174,13 @@ if __name__ == "__main__":
                     total += labels.size(0)
                     correct += (predicted == labels).sum()
                 acc = 100. * correct / total
-                print('ACC:', acc)
+                print('Test ACC with epoch',epoch+1,':', acc)
                 print('Saving model......')
-                torch.save(net.state_dict(), args.output+'/net_'+(epoch+1)+'.pth')
+                torch.save(net.state_dict(), args.output+'/net_'+(str)(epoch+1)+'.pth')
                 with open(args.output+'/acc.txt','a') as f:
-                    f.write('EPOCH=',epoch+1,'ACC=',acc)
+                    f.write('EPOCH='+str(epoch+1)+'ACC='+str(acc))
                     f.flush()
+                    
     elif args.test:
         import torch
         import torchvision.models.resnet as resnet

@@ -1,0 +1,1 @@
+EPOCH=1ACC=tensor(28.5714, device='cuda:0')
